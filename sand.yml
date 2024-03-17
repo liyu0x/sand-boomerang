@@ -3,7 +3,7 @@ cipher: sand
 
 startRound: 10
 # the rounds of starting searching
-endRound: -1
+endRound: 20
 # the last rounds of searching
 
 switchRounds: 1
@@ -15,7 +15,7 @@ threshold: 10
 eachRoundMaxTime: 24
 # the max searching time in each round with all weights.
 
-eachRoundMaxValid: 1
+eachRoundMaxValid: 3
 # the max results in each round with all weights.
 
 wordsize: 64

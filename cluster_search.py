@@ -138,19 +138,19 @@ def find_single_trail(cipher, r, lunch_arg):
 
             boomerang_weight = -params['sweight'] * 2
 
-            save_str = "inputDiff:{0}, outputDiff:{1}, boomerang weight:{2}, rectangle weight:{3}\n".format(input_diff,
-                                                                                                            output_diff,
-                                                                                                            boomerang_weight,
-                                                                                                            rectangle_weight)
+            save_str0 = "inputDiff:{0}, outputDiff:{1}, boomerang weight:{2}, rectangle weight:{3}\n".format(input_diff,
+                                                                                                             output_diff,
+                                                                                                             boomerang_weight,
+                                                                                                             rectangle_weight)
 
-            save_str = "{0},{1},{2},{3},{4},{5},{6}\n".format(input_diff, switch_input, switch_output, output_diff,
-                                                              params["rounds"],
-                                                              boomerang_weight, rectangle_weight)
+            save_str1 = "{0},{1},{2},{3},{4},{5},{6}\n".format(input_diff, switch_input, switch_output, output_diff,
+                                                               params["rounds"],
+                                                               boomerang_weight, rectangle_weight)
 
             if rectangle_weight >= -params['validBound']:
                 valid_count += 1
-                detail_list.append([rectangle_weight, save_str])
-            check_list.append([rectangle_weight, save_str])
+                detail_list.append([rectangle_weight, save_str0])
+            check_list.append([rectangle_weight, save_str1])
             print("MAX PROB:{0}, INPUT:{1}, OUTPUT:{2}".format(rectangle_weight, input_diff, output_diff))
         else:
             valid_count += 1
@@ -198,7 +198,7 @@ def loadparameters(args):
     Get parameters from the argument list and inputfile.
     """
     # Load default values
-    params = {"cipher": "simon",
+    params = {"cipher": "sand",
               "startRound": 5,
               "endRound": -1,
               "switchRounds": 4,
