@@ -182,11 +182,8 @@ def start_search(lunch_arg):
         if switch_rounds == -1:
             params['switchStartRound'] = -1
         else:
-            # SIMON
-            switch_start_round = int(r / 2) + 1
 
-            # Others
-            # switch_start_round = int(r/2) - int(switch_rounds/2)
+            switch_start_round = int(r / 2) - int(switch_rounds / 2)
 
             params['switchStartRound'] = switch_start_round
         params['rounds'] = r

@@ -116,6 +116,8 @@ class Sand(AbstractCipher):
                         tmp += [0, 0, 0, 1]  # 2^-1
                     elif bct[input_diff][output_diff] == 16:
                         tmp += [0, 0, 0, 0]
+                    # if bct[input_diff][output_diff] == 16:
+                    #     tmp += [0, 0, 0, 0]
                     trails.append(tmp)
 
         variables_list = []
@@ -270,16 +272,27 @@ class Sand(AbstractCipher):
                 input_diff_l = trails_data[0][0]
                 input_diff_r = trails_data[0][1]
 
-                # output diff
-                output_diff_l = trails_data[r][2]
-                output_diff_r = trails_data[r][3]
+                switch_rounds = param["switchRounds"]
+                if switch_rounds < 0:
+                    output_diff_l = trails_data[r][0]
+                    output_diff_r = trails_data[r][1]
+                    str1 = "(BVXOR(XL0,{0})|BVXOR(XR0, {1}) | BVXOR(XL{2}, {3}) | BVXOR(XR{2}, {4}))".format(
+                        input_diff_l,
+                        input_diff_r,
+                        r,
+                        output_diff_l,
+                        output_diff_r)
+                else:
+                    # output diff
+                    output_diff_l = trails_data[r][2]
+                    output_diff_r = trails_data[r][3]
+                    str1 = "(BVXOR(XL0,{0})|BVXOR(XR0, {1}) | BVXOR(YL{2}, {3}) | BVXOR(YR{2}, {4}))".format(
+                        input_diff_l,
+                        input_diff_r,
+                        r,
+                        output_diff_l,
+                        output_diff_r)
 
-                str1 = "(BVXOR(XL0,{0})|BVXOR(XR0, {1}) | BVXOR(XL{2}, {3}) | BVXOR(XR{2}, {4}))".format(
-                    input_diff_l,
-                    input_diff_r,
-                    r,
-                    output_diff_l,
-                    output_diff_r)
                 command += str1
                 command += "&"
             command = command[:-1]

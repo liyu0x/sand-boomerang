@@ -1,15 +1,15 @@
 cipher: sand
 #ciphers' identifier
 
-startRound: 10
+startRound: 4
 # the rounds of starting searching
-endRound: -1
+endRound: 10
 # the last rounds of searching
 
-switchRounds: -1
+switchRounds: 1
 # setting rounds of boomerang switches, if value is -1, then there is no switch structure in STM model.
 
-threshold: 10
+threshold: 4
 # Count the number of times the rectangle probability stays within an integer range, if number > threshold, then stop searching.
 
 eachRoundMaxTime: 24
