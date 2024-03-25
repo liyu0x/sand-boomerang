@@ -312,7 +312,7 @@ def startSATsolver(stp_file):
         sat_params = [PATH_SHARP,
                       "-decot", "1",
                       "-decow", "100",
-                      "-tmpdir", "./tmp",
+                      "-tmpdir", "./sharp_tmp",
                       "-cs", "3500",
                       "output_0.cnf"
                       ]

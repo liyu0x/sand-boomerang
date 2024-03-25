@@ -1,0 +1,21 @@
+Rounds: 13, probability: -70.01342463049329, Input Left:0x32000000, Input Right:0x78000000, Output Left:0x0F000000, Output Right:0x64000000
+		 switch in:0x32000000, switch out:0x64000000, trail weight:0x0024, switch weight:-0
+		 switch in:0x32000000, switch out:0x64040000, trail weight:0x0025, switch weight:-0
+		 switch in:0x32000010, switch out:0x64000000, trail weight:0x0025, switch weight:-0
+		 switch in:0x30000212, switch out:0x64000000, trail weight:0x0025, switch weight:-0
+		 switch in:0x20000212, switch out:0x64000000, trail weight:0x0025, switch weight:-0
+		 switch in:0x32000000, switch out:0x64080000, trail weight:0x0025, switch weight:-0
+		 switch in:0x32020000, switch out:0x64000000, trail weight:0x0025, switch weight:-0
+		 switch in:0x32000000, switch out:0x64000040, trail weight:0x0025, switch weight:-0
+		 switch in:0x32000000, switch out:0x64400000, trail weight:0x0025, switch weight:-0
+		 switch in:0x32000000, switch out:0x64040400, trail weight:0x0025, switch weight:-0
+		 switch in:0x32000000, switch out:0x24000040, trail weight:0x0025, switch weight:-0
+		 switch in:0x32000000, switch out:0x64080800, trail weight:0x0025, switch weight:-0
+		 switch in:0x32000020, switch out:0x64000000, trail weight:0x0026, switch weight:-1
+		 switch in:0x12000020, switch out:0x64000000, trail weight:0x0026, switch weight:-1
+		 switch in:0x12000020, switch out:0x44000020, trail weight:0x0026, switch weight:-0
+		 switch in:0x32000000, switch out:0x24404840, trail weight:0x0026, switch weight:-0
+		 switch in:0x12000020, switch out:0x40000024, trail weight:0x0026, switch weight:-0
+		 switch in:0x32000000, switch out:0x40000424, trail weight:0x0026, switch weight:-1
+		 switch in:0x32200000, switch out:0x44000020, trail weight:0x0027, switch weight:-1
+		 switch in:0x32040400, switch out:0x40000424, trail weight:0x0028, switch weight:-2

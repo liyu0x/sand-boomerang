@@ -5,6 +5,48 @@ import itertools
 import numpy as np
 
 
+def switch_searching(param):
+    if len(param['previous_trail']) <= 0:
+        return ""
+    previous_trails = param['previous_trail']
+    data = param['previous_trail'][-1]
+    trails_data = data.getData()
+
+    r = param['rounds']
+
+    param["blockedCharacteristics"].clear()
+    param["fixedVariables"].clear()
+
+    # input diff
+    input_diff_l = trails_data[0][0]
+    input_diff_r = trails_data[0][1]
+    param["fixedVariables"]["XL0"] = input_diff_l
+    param["fixedVariables"]["XR0"] = input_diff_r
+
+    # output diff
+    output_diff_l = trails_data[r][2]
+    output_diff_r = trails_data[r][3]
+    param["fixedVariables"]["YL{}".format(r)] = output_diff_l
+    param["fixedVariables"]["YR{}".format(r)] = output_diff_r
+
+    command = ""
+    start_rounds = param["em_start_search_num"]
+    end_round = param['em_end_search_num']
+    if len(previous_trails) > 0:
+        command = "ASSERT(NOT("
+        for characteristic in previous_trails:
+            trails_data = characteristic.getData()
+            str1 = "(BVXOR(XL{0},{1})|BVXOR(YR{2}, {3}))".format(
+                start_rounds, trails_data[start_rounds][0], end_round,
+                trails_data[end_round][3])
+
+            command += str1
+            command += "&"
+        command = command[:-1]
+        command += "=0x{}));\n".format('0' * (8))
+    return command
+
+
 class Sand(AbstractCipher):
     name = 'sand'
 
@@ -35,6 +77,9 @@ class Sand(AbstractCipher):
             rounds if switch_start_round == -1 else switch_start_round + switch_rounds
         )
         e1_end_search_num = rounds
+
+        parameters["em_start_search_num"] = em_start_search_num
+        parameters["em_end_search_num"] = em_end_search_num
 
         block_size = word_size // 2
 
@@ -70,7 +115,13 @@ class Sand(AbstractCipher):
                                  variables["g1_rot"][i], variables["g1_box_out"][i],
                                  variables["g01_xor_out"][i], variables["perm_out"][i], variables["w"][i], block_size)
 
-            command += self.pre_handle(parameters)
+            # searching for simple trails
+            if not parameters['cluster'] and not parameters["search_switches"]:
+                command += self.pre_handle(parameters)
+            # searching for switches with fixed input and output differ
+            if parameters["search_switches"] == 1:
+                command += switch_searching(parameters)
+
             stp_file.write(command)
             stpcommands.assertNonZero(stp_file, [variables["xl"][0], variables["xr"][0]], block_size)
             if switch_rounds > 0:
@@ -132,7 +183,7 @@ class Sand(AbstractCipher):
                          "{0}[{1}:{1}]".format(out_right, i),
                          "{0}[{1}:{1}]".format(w, 24 + i),
                          "{0}[{1}:{1}]".format(w, 16 + i),
-                         "{0}[{1}:{1}]".format(w, 8 + 1),
+                         "{0}[{1}:{1}]".format(w, 8 + i),
                          "{0}[{1}:{1}]".format(w, i)]
             variables_list.append(variables)
 
@@ -213,24 +264,33 @@ class Sand(AbstractCipher):
         pass
 
     def create_cluster_parameters(self, new_parameters, characteristic):
-        r = new_parameters['rounds']
-        # Cluster Search
+        # Cluster Search Setting
         trails_data = characteristic.getData()
+
+        r = new_parameters['rounds']
+        start_rounds = new_parameters["em_start_search_num"]
+        switch_round = new_parameters['em_end_search_num']
+
         new_parameters["blockedCharacteristics"].clear()
         new_parameters["fixedVariables"].clear()
 
+        # fixed input
         input_diff_l = trails_data[0][0]
         input_diff_r = trails_data[0][1]
-
-        # output diff
-        output_diff_l = trails_data[r][2]
-        output_diff_r = trails_data[r][3]
-
         new_parameters["fixedVariables"]["XL0"] = input_diff_l
         new_parameters["fixedVariables"]["XR0"] = input_diff_r
 
+        # fixed output
+        output_diff_l = trails_data[r][2]
+        output_diff_r = trails_data[r][3]
         new_parameters["fixedVariables"]["YL{}".format(r)] = output_diff_l
         new_parameters["fixedVariables"]["YR{}".format(r)] = output_diff_r
+
+        # fix boomerang switch
+        switch_in = trails_data[start_rounds][0]
+        switch_out = trails_data[switch_round][3]
+        new_parameters["fixedVariables"]["XL{}".format(start_rounds)] = switch_in
+        new_parameters["fixedVariables"]["YR{}".format(switch_round)] = switch_out
 
     def get_diff_hex(self, parameters, characteristics):
         switch_start_round = parameters['switchStartRound']
@@ -255,7 +315,10 @@ class Sand(AbstractCipher):
         switch_input = switch_input_diff_l + switch_input_diff_r.replace("0x", "")
         switch_output = switch_output_diff_l + switch_output_diff_r.replace("0x", "")
 
-        return input_diff, switch_input, switch_output, output_diff
+        # switch weight
+        switch_weight = trails_data[switch_start_round][10]
+
+        return input_diff, switch_input, switch_output, output_diff, switch_weight
 
     def pre_handle(self, param):
         if 'countered_trails' not in param:
@@ -297,6 +360,8 @@ class Sand(AbstractCipher):
                 command += "&"
             command = command[:-1]
             command += "=0x{}));\n".format('0' * (8))
+            # switch
+
         return command
 
     def getFormatString(self):
@@ -417,23 +482,6 @@ def add4bitSbox(s_box_trails, left_in, s_out, w, indexes):
                  "{0}[{1}:{1}]".format(w, indexes[2]),
                  "{0}[{1}:{1}]".format(w, indexes[1]),
                  "{0}[{1}:{1}]".format(w, indexes[0])]
-
-    # cnf = []
-    # for valid_trail in s_box_trails:
-    #     c = []
-    #     for i in range(len(variables)):
-    #         # c.append("({}=0bin{})".format(variables[i], valid_trail[i]))
-    #         c.append("BVXOR({0},0bin{1})".format(variables[i], valid_trail[i]))
-    #     # cnf.append("(" + "&".join(c) + ")")
-    #     cnf.append("&".join(c))
-    #     # cnf.append("(" + "&".join(c) + ")")
-    #     break
-    #
-    # conditions = "|".join(cnf)
-    #
-    # command = "ASSERT({0}=0bin1);\n".format(conditions)
-    #
-    # return command
 
     # Build CNF from invalid trails
     cnf = ""

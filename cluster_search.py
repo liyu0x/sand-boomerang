@@ -13,22 +13,61 @@ import re
 
 CIPHER_MAPPING = {"sand": sand_sbox.Sand()}
 
-RESULT_DIC = {'sand': "sand_result/"}
-
 TEMP_DIC = "tmp/"
+
+STORE = []
+
+TOTAL_PROB = 0
+
+
+def checkout_results(params, file):
+    if len(params["previous_trail"]) == 0:
+        return
+    data = params["previous_trail"][-1]
+    trails_data = data.getData()
+    r = params['rounds']
+    start_rounds = params["em_start_search_num"]
+    switch_round = params['em_end_search_num']
+
+    # input differ
+    input_diff_l = trails_data[0][0]
+    input_diff_r = trails_data[0][1]
+
+    # output differ
+    output_diff_l = trails_data[r][2]
+    output_diff_r = trails_data[r][3]
+
+    log = ("Rounds: {}, probability: {}, Input Left:{}, Input Right:{}, Output Left:{}, Output Right:{}\n"
+           .format(r,
+                   math.log2(
+                       TOTAL_PROB),
+                   input_diff_l,
+                   input_diff_r,
+                   output_diff_l,
+                   output_diff_r))
+
+    file.write(log)
+
+    for trail in params["previous_trail"]:
+        trails_data = trail.getData()
+        switch_in = trails_data[start_rounds][0]
+        switch_out = trails_data[switch_round][3]
+        weight = trail.weight
+        switch_weight = trails_data[start_rounds][10]
+        log = "\t\t switch in:{}, switch out:{}, trail weight:{}, switch weight:{}\n".format(switch_in, switch_out,
+                                                                                             weight, switch_weight)
+        file.write(log)
+
+    file.flush()
 
 
 def check_solutions(new_parameter, cipher, threshold, cluster_count):
-    if 'countered_trails' in new_parameter:
-        new_parameter['countered_trails'].clear()
-    prob = 0
+    total_count = 0
     start_time = str(uuid.uuid4())
     stp_file = TEMP_DIC + "{}{}-{}.stp".format(cipher.name, "clutesr", start_time)
     last_weight = 0
     count = 1
     cluster_counter = 0
-    new_parameter['cluster'] = 1
-    ori_w = new_parameter['sweight']
     while count < threshold and cluster_counter < cluster_count:
         cluster_counter += 1
         new_weight = last_weight
@@ -59,49 +98,50 @@ def check_solutions(new_parameter, cipher, threshold, cluster_count):
                     if "s SATISFIABLE" in line.decode("utf-8"):
                         solutions += 1
         if solutions > 0:
-            solutions /= 2
             print("\n\tSolutions: {}".format(solutions))
-            new_p = math.pow(2, -new_parameter["sweight"] * 2) * solutions
-            prob += new_p
-            new_weight = int(math.log2(prob))
-            # if new_weight < -37:
-            #     break
-            report_str = "boomerang weight: {0}, rectangle weight:{1}".format(-ori_w * 2,
-                                                                              math.log2(prob))
-            print(report_str)
-            cipher.get_cluster_params(new_parameter, new_p, prob)
-        if prob > 1:
-            prob = 1
-            break
+            total_count += count
+
         new_parameter['sweight'] += 1
-        # print("Cluster Searching Stage|Current Weight:{0}".format(new_weight))
         if new_weight == last_weight:
             count += 1
         else:
             last_weight = new_weight
             count = 1
-    return prob
+    return total_count
 
 
 def find_single_trail(cipher, r, lunch_arg):
+    global TOTAL_PROB
+    start_searching = False
     flag = lunch_arg['switchStartRound']
-    result_dic = RESULT_DIC[cipher.name]
     task_start_time = time.time()
     valid_count = 0
-    save_file = result_dic + "{0}-{1}.txt".format(cipher.name, r, flag)
-    save_list_file = result_dic + "{0}-{1}-LIST.txt".format(cipher.name, r, flag)
-    result_file = open(save_file, "w+")
-    result_list_file = open(save_list_file, 'w+')
     params = copy.deepcopy(lunch_arg)
     each_round_max_valid = int(lunch_arg['eachRoundMaxValid'])
     each_round_max_time = int(lunch_arg['eachRoundMaxTime']) * 3600
     rnd_string_tmp = "%030x" % random.randrange(16 ** 30)
     stp_file = TEMP_DIC + "{0}-{1}-{2}.stp".format(cipher.name, rnd_string_tmp, r)
-    detail_list = []
-    check_list = []
+    switch_timer = 0
+    save_file = "results/" + "{0}-{1}.txt".format(cipher.name, lunch_arg["rounds"])
+    result_file = open(save_file, "w+")
     while valid_count < each_round_max_valid and time.time() - task_start_time < each_round_max_time:
+        params["cluster"] = False
+        if switch_timer > 10:
+            checkout_results(params, result_file)
+            params["sweight"] = lunch_arg["sweight"]
+            params["countered_trails"].append(params["previous_trail"][0])
+            params["previous_trail"].clear()
+            valid_count += 1
+            TOTAL_PROB = 0
+            switch_timer = 0
+            start_searching = False
+            params["search_switches"] = False
+            params["fixedVariables"].clear()
+
+        params["cluster"] = 0
         if params['sweight'] >= lunch_arg['endweight']:
             break
+
         cipher.createSTP(stp_file, params)
         if params["boolector"]:
             result = search.solveBoolector(stp_file)
@@ -114,65 +154,43 @@ def find_single_trail(cipher, r, lunch_arg):
                 )
             )
             params["sweight"] += 1
+            if start_searching:
+                switch_timer += 1
             continue
 
         characteristic = search.parsesolveroutput.getCharSTPOutput(result, cipher, params["rounds"])
-
         characteristic.printText()
+        params['previous_trail'].append(characteristic)
+        params["search_switches"] = True
+        start_searching = True
         if flag != -1:
             # Cluster Search
             new_parameters = copy.deepcopy(params)
-
+            new_parameters["search_switches"] = False
+            new_parameters["cluster"] = True
             new_parameters["blockedCharacteristics"].clear()
             new_parameters["fixedVariables"].clear()
+            new_parameters["countered_trails"].clear()
             cipher.create_cluster_parameters(new_parameters, characteristic)
-            if params['sweight'] == 0:
-                prob = 1
-            else:
-                prob = check_solutions(new_parameters, cipher, lunch_arg['threshold'], lunch_arg['cluster_count'])
-            if prob > 0:
-                rectangle_weight = math.log2(prob)
-            else:
-                rectangle_weight = -9999
-            input_diff, switch_input, switch_output, output_diff = cipher.get_diff_hex(params, characteristic)
 
-            boomerang_weight = -params['sweight'] * 2
+            solutions = check_solutions(new_parameters, cipher, lunch_arg['threshold'], lunch_arg['cluster_count'])
+            summing_prob(characteristic, solutions, params)
 
-            save_str0 = "inputDiff:{0}, outputDiff:{1}, boomerang weight:{2}, rectangle weight:{3}\n".format(input_diff,
-                                                                                                             output_diff,
-                                                                                                             boomerang_weight,
-                                                                                                             rectangle_weight)
 
-            save_str1 = "{0},{1},{2},{3},{4},{5},{6}\n".format(input_diff, switch_input, switch_output, output_diff,
-                                                               params["rounds"],
-                                                               boomerang_weight, rectangle_weight)
-
-            if rectangle_weight >= -params['validBound']:
-                valid_count += 1
-                detail_list.append([rectangle_weight, save_str0])
-            check_list.append([rectangle_weight, save_str1])
-            print("MAX PROB:{0}, INPUT:{1}, OUTPUT:{2}".format(rectangle_weight, input_diff, output_diff))
-        else:
-            valid_count += 1
-        # params["sweight"] += 1
-        params["countered_trails"].append(characteristic)
-        print("Current trails:")
-        print(detail_list)
-
-    detail_list.sort(key=lambda x: x[0], reverse=True)
-    check_list.sort(key=lambda x: x[0], reverse=True)
-
-    result_file.writelines([i[1] for i in detail_list])
-    result_file.flush()
-
-    result_list_file.writelines([i[1] for i in check_list])
-    result_list_file.flush()
+def summing_prob(characteristic, solutions, params):
+    weight = (int(characteristic.weight, 16))
+    trails = characteristic.getData()
+    switch_weight_key = params["em_start_search_num"]
+    switch_weight = int(trails[switch_weight_key][10])
+    pro = math.pow(2, -2 * (weight - switch_weight) + switch_weight) * solutions
+    global TOTAL_PROB
+    TOTAL_PROB += pro
 
 
 def start_search(lunch_arg):
     cipher_name = lunch_arg['cipher']
     cipher = CIPHER_MAPPING[cipher_name]
-    util.makedirs([RESULT_DIC[cipher_name], TEMP_DIC])
+    util.makedirs(["results", TEMP_DIC])
     start_round = lunch_arg['startRound']
     end_round = lunch_arg['endRound']
     end_round = start_round + 1 if end_round == -1 else end_round
@@ -213,7 +231,9 @@ def loadparameters(args):
               "nummessages": 1,
               "timelimit": -1,
               "fixedVariables": {},
-              "blockedCharacteristics": []}
+              "blockedCharacteristics": [],
+              "search_switches": False,
+              "countered_trails": []}
 
     # Check if there is an input file specified
     if args.inputfile:
