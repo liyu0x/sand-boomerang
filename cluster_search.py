@@ -56,28 +56,30 @@ def checkout_results(params, file):
         switch_weight = trails_data[start_rounds][10]
         log = "\t\t switch in:{}, switch out:{}, trail weight:{}, switch weight:{}\n".format(switch_in, switch_out,
                                                                                              weight, switch_weight)
+        counter = trail.previous_trail_count
+        for key in counter:
+            log += "\t\t\t weight:{0}, solutions:{1}\n".format(key, counter[key])
         file.write(log)
 
     file.flush()
 
 
 def check_solutions(new_parameter, cipher, threshold, cluster_count):
-    total_count = 0
+    sol_counter = 0
     start_time = str(uuid.uuid4())
     stp_file = TEMP_DIC + "{}{}-{}.stp".format(cipher.name, "clutesr", start_time)
-    last_weight = 0
     count = 1
     cluster_counter = 0
+    solutions_map = {}
     while count < threshold and cluster_counter < cluster_count:
         cluster_counter += 1
-        new_weight = last_weight
         cipher.createSTP(stp_file, new_parameter)
 
         # Start solver
         sat_process = search.startSATsolver(stp_file)
 
         # Find the number of solutions with the SAT solver
-        print("Finding all trails of weight {}".format(new_parameter["sweight"]))
+        print("Finding all trails of weight {}\n".format(new_parameter["sweight"]))
 
         # Watch the process and count solutions
         solutions = 0
@@ -98,16 +100,17 @@ def check_solutions(new_parameter, cipher, threshold, cluster_count):
                     if "s SATISFIABLE" in line.decode("utf-8"):
                         solutions += 1
         if solutions > 0:
-            print("\n\tSolutions: {}".format(solutions))
-            total_count += count
+            print("\tSolutions: {}".format(solutions))
+            sol_counter += solutions
 
+        solutions_map[new_parameter['sweight']] = solutions
         new_parameter['sweight'] += 1
-        if new_weight == last_weight:
+        if solutions == 0:
             count += 1
         else:
-            last_weight = new_weight
-            count = 1
-    return total_count
+            count = 0
+
+    return sol_counter, solutions_map
 
 
 def find_single_trail(cipher, r, lunch_arg):
@@ -124,9 +127,11 @@ def find_single_trail(cipher, r, lunch_arg):
     switch_timer = 0
     save_file = "results/" + "{0}-{1}.txt".format(cipher.name, lunch_arg["rounds"])
     result_file = open(save_file, "w+")
+    report_flag = False
     while valid_count < each_round_max_valid and time.time() - task_start_time < each_round_max_time:
         params["cluster"] = False
         if switch_timer > 10:
+            print("-----------------------------Switches searching end--------------------------------")
             checkout_results(params, result_file)
             params["sweight"] = lunch_arg["sweight"]
             params["countered_trails"].append(params["previous_trail"][0])
@@ -162,6 +167,8 @@ def find_single_trail(cipher, r, lunch_arg):
         characteristic.printText()
         params['previous_trail'].append(characteristic)
         params["search_switches"] = True
+        if params["search_switches"] and switch_timer == 0:
+            print("-----------------------------Switches searching start--------------------------------")
         start_searching = True
         if flag != -1:
             # Cluster Search
@@ -173,8 +180,14 @@ def find_single_trail(cipher, r, lunch_arg):
             new_parameters["countered_trails"].clear()
             cipher.create_cluster_parameters(new_parameters, characteristic)
 
-            solutions = check_solutions(new_parameters, cipher, lunch_arg['threshold'], lunch_arg['cluster_count'])
+            solutions, solutions_counter = check_solutions(new_parameters, cipher, lunch_arg['threshold'],
+                                                           lunch_arg['cluster_count'])
+            if params["search_switches"]:
+                print("solutions:{}".format(solutions))
+            setattr(characteristic, "previous_trail_count", solutions_counter)
+
             summing_prob(characteristic, solutions, params)
+    checkout_results(params, result_file)
 
 
 def summing_prob(characteristic, solutions, params):
