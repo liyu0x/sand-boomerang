@@ -305,7 +305,7 @@ def startSATsolver(stp_file):
         sat_params = [PATH_CRYPTOMINISAT,
                       "--maxsol", str(MAX_CHARACTERISTICS),
                       "--verb", "0",
-                      "-s", "0",
+                      "--printsol,s", "0",
                       "--threads", str(MULTI_THREADS),
                       "output_0.cnf"]
     else:
