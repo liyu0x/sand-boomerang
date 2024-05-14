@@ -100,6 +100,7 @@ def check_solutions(new_parameter, cipher, threshold, cluster_count):
                     if "s SATISFIABLE" in line.decode("utf-8"):
                         solutions += 1
         if solutions > 0:
+            solutions /= 2
             print("\tSolutions: {}".format(solutions))
             sol_counter += solutions
 
@@ -233,7 +234,7 @@ def loadparameters(args):
               "threshold": 6,
               "eachRoundMaxTime": 60 * 60 * 5,
               "eachRoundMaxValid": 2,
-              "wordsize": 16,
+              "wordsize": 64,
               "blocksize": 64,
               "sweight": 0,
               "endweight": 1000,
@@ -270,7 +271,7 @@ def main():
                             formatter_class=RawTextHelpFormatter)
 
     parser.add_argument('--inputfile', nargs=1, help="Use an yaml input file to"
-                                                     "read the parameters.")
+                                                     "read the parameters.", default=["sand.yml"])
 
     args = parser.parse_args()
     params = loadparameters(args)

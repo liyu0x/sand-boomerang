@@ -22,5 +22,5 @@ PATH_BOOLECTOR = "/opt/homebrew/bin/boolector"
 MAX_WEIGHT = 1000
 # Maximum number of characteristics to search for a differential
 MAX_CHARACTERISTICS = 10000000
-MULTI_THREADS = 6
-USE_SHARP = 1
+MULTI_THREADS = 4
+USE_SHARP = 0
