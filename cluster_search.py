@@ -204,7 +204,7 @@ def summing_prob(characteristic, solutions, params):
 def start_search(lunch_arg):
     cipher_name = lunch_arg['cipher']
     cipher = CIPHER_MAPPING[cipher_name]
-    util.makedirs(["results", TEMP_DIC])
+    util.makedirs(["results", TEMP_DIC, "sharp_tmp"])
     start_round = lunch_arg['startRound']
     end_round = lunch_arg['endRound']
     end_round = start_round + 1 if end_round == -1 else end_round

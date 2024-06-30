@@ -81,8 +81,6 @@ class Sand(AbstractCipher):
         parameters["em_start_search_num"] = em_start_search_num
         parameters["em_end_search_num"] = em_end_search_num
 
-        block_size = word_size // 2
-
         if block_size == 32:
             self.PERM = [7, 4, 1, 6, 3, 0, 5, 2]
         elif block_size == 64:
@@ -106,7 +104,7 @@ class Sand(AbstractCipher):
                                  variables["g01_xor_out"][i], variables["perm_out"][i], variables["w"][i], block_size)
             # BCT
             for i in range(em_start_search_num, em_end_search_num):
-                self.bct_operator(stp_file, variables["xl"][i], variables["yr"][i + 1], variables["w"][i])
+                self.bct_operator(stp_file, variables["xl"][i], variables["yr"][i + 1], variables["w"][i], block_size)
 
             for i in range(e1_start_search_num, e1_end_search_num):
                 self.setup_round(stp_file, variables["yl"][i], variables["yr"][i],
@@ -140,7 +138,7 @@ class Sand(AbstractCipher):
             command += "ASSERT({0}[{1}:{1}]={2}[{3}:{3}]);\n".format(out_right, i, in_right, re_sharp[i])
         stp_file.write(command)
 
-    def bct_operator(self, stp_file, in_left, out_right, w):
+    def bct_operator(self, stp_file, in_left, out_right, w, block_size):
 
         bct = create_bct(self.G0_BOX, self.G1_BOX)
 
@@ -172,18 +170,21 @@ class Sand(AbstractCipher):
                     trails.append(tmp)
 
         variables_list = []
-        for i in range(8):
-            variables = ["{0}[{1}:{1}]".format(in_left, 24 + i),
-                         "{0}[{1}:{1}]".format(in_left, 16 + i),
-                         "{0}[{1}:{1}]".format(in_left, 8 + i),
+
+        group_count = block_size // 4
+
+        for i in range(group_count):
+            variables = ["{0}[{1}:{1}]".format(in_left, group_count * 3 + i),
+                         "{0}[{1}:{1}]".format(in_left, group_count * 2 + i),
+                         "{0}[{1}:{1}]".format(in_left, group_count + i),
                          "{0}[{1}:{1}]".format(in_left, i),
-                         "{0}[{1}:{1}]".format(out_right, 24 + i),
-                         "{0}[{1}:{1}]".format(out_right, 16 + i),
-                         "{0}[{1}:{1}]".format(out_right, 8 + i),
+                         "{0}[{1}:{1}]".format(out_right, group_count * 3 + i),
+                         "{0}[{1}:{1}]".format(out_right, group_count * 2 + i),
+                         "{0}[{1}:{1}]".format(out_right, group_count + i),
                          "{0}[{1}:{1}]".format(out_right, i),
-                         "{0}[{1}:{1}]".format(w, 24 + i),
-                         "{0}[{1}:{1}]".format(w, 16 + i),
-                         "{0}[{1}:{1}]".format(w, 8 + i),
+                         "{0}[{1}:{1}]".format(w, group_count * 3 + i),
+                         "{0}[{1}:{1}]".format(w, group_count * 2 + i),
+                         "{0}[{1}:{1}]".format(w, group_count + i),
                          "{0}[{1}:{1}]".format(w, i)]
             variables_list.append(variables)
 
@@ -208,7 +209,7 @@ class Sand(AbstractCipher):
 
         command = "ASSERT({} = {});\n".format(out_right, in_left)
 
-        group_size = 8
+        group_size = block_size // 4
 
         g0_box_trails = get_valid_from_s_box(self.G0_BOX)
         g1_box_trails = get_valid_from_s_box(self.G1_BOX)
@@ -250,11 +251,15 @@ class Sand(AbstractCipher):
         command += "ASSERT({0} = BVXOR({1},{2}));\n".format(g01_xor_out, g0_box_out, g1_box_out)
 
         # P_out
-        if block_size == 32:
-            for i in range(block_size // 8):
-                for j, k in enumerate([7, 4, 1, 6, 3, 0, 5, 2]):
-                    command += "ASSERT({0}[{1}:{1}] = {2}[{3}:{3}]);\n".format(perm_out, i * 8 + k,
-                                                                               g01_xor_out, i * 8 + j)
+        for i in range(4):
+            for j, k in enumerate(self.PERM):
+                command += "ASSERT({0}[{1}:{1}] = {2}[{3}:{3}]);\n".format(perm_out, i * group_size + k,
+                                                                           g01_xor_out, i * group_size + j)
+        # if block_size == 32:
+        #     for i in range(block_size // 8):
+        #         for j, k in enumerate([7, 4, 1, 6, 3, 0, 5, 2]):
+        #             command += "ASSERT({0}[{1}:{1}] = {2}[{3}:{3}]);\n".format(perm_out, i * 8 + k,
+        #                                                                        g01_xor_out, i * 8 + j)
 
         command += ("ASSERT({0} = BVXOR({1},{2}));\n".format(out_left, in_right, perm_out))
 
