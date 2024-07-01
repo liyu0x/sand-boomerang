@@ -5,7 +5,7 @@ import itertools
 import numpy as np
 
 
-def switch_searching(param):
+def switch_searching(param, word_size):
     if len(param['previous_trail']) <= 0:
         return ""
     previous_trails = param['previous_trail']
@@ -43,7 +43,7 @@ def switch_searching(param):
             command += str1
             command += "&"
         command = command[:-1]
-        command += "=0x{}));\n".format('0' * (8))
+        command += "=0x{}));\n".format('0' * (word_size // 4))
     return command
 
 
@@ -115,10 +115,10 @@ class Sand(AbstractCipher):
 
             # searching for simple trails
             if not parameters['cluster'] and not parameters["search_switches"]:
-                command += self.pre_handle(parameters)
+                command += self.pre_handle(parameters, block_size)
             # searching for switches with fixed input and output differ
             if parameters["search_switches"] == 1:
-                command += switch_searching(parameters)
+                command += switch_searching(parameters, block_size)
 
             stp_file.write(command)
             stpcommands.assertNonZero(stp_file, [variables["xl"][0], variables["xr"][0]], block_size)
@@ -241,10 +241,10 @@ class Sand(AbstractCipher):
 
         # G_1
         for i in range(group_size):
-            indexes = [32 + i, 32 + group_size + i, 32 + 2 * group_size + i, 32 + 3 * group_size + i,
+            indexes = [block_size + i, block_size + group_size + i, block_size + 2 * group_size + i,
+                       block_size + 3 * group_size + i,
                        i, group_size + i, 2 * group_size + i, 3 * group_size + i,
-                       i, group_size + i, 2 * group_size + i, 3 * group_size + i,
-                       ]
+                       i, group_size + i, 2 * group_size + i, 3 * group_size + i]
             command += add4bitSbox(g1_box_trails, g1_rot, g1_box_out, w, indexes)
 
         # G1 xor G2
@@ -325,7 +325,7 @@ class Sand(AbstractCipher):
 
         return input_diff, switch_input, switch_output, output_diff, switch_weight
 
-    def pre_handle(self, param):
+    def pre_handle(self, param, block_size):
         if 'countered_trails' not in param:
             return ""
         characters = param["countered_trails"]
@@ -364,7 +364,7 @@ class Sand(AbstractCipher):
                 command += str1
                 command += "&"
             command = command[:-1]
-            command += "=0x{}));\n".format('0' * (8))
+            command += "=0x{}));\n".format('0' * (block_size // 4))
             # switch
 
         return command

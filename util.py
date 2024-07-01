@@ -1,13 +1,14 @@
 import os
-
+import shutil
 import numpy
 import numpy as np
 
 
 def makedirs(dirs: list):
-    for dir in dirs:
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+    for dir_str in dirs:
+        if os.path.exists(dir_str):
+            shutil.rmtree(dir_str)
+        os.makedirs(dir_str)
 
 
 def sand_t(n, rotation=0) -> list:
