@@ -9,5 +9,5 @@
 
 1. Run command ```python3 cluster_search.py --inputfile sand.yaml``` for SAND-64.
 2. Run command ```python3 cluster_search.py --inputfile sand-128.yaml``` for SAND-128.
-3. Check results in folder ```restuls```.
+3. Check results in folder ```results```.
 
