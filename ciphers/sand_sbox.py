@@ -57,7 +57,8 @@ class Sand(AbstractCipher):
     def __init__(self):
         self.PERM = None
         self.G0_BOX = [0, 1, 2, 0xb, 4, 5, 6, 0xf, 8, 9, 0xa, 3, 0xd, 0xc, 7, 0xe]
-        self.G1_BOX = [0, 1, 2, 3, 4, 7, 6, 5, 8, 9, 0xe, 0xd, 0xc, 0xf, 0xa, 0xb]
+        #self.G1_BOX = [0, 1, 2, 3, 4, 7, 6, 5, 8, 9, 0xe, 0xd, 0xc, 0xf, 0xa, 0xb]
+        self.G1_BOX = [0, 2, 4, 6, 8, 0xe, 0xc, 0xa, 1, 3, 7, 5, 9, 0xd, 0xf, 0xb]
 
     def createSTP(self, filename, parameters):
         word_size = parameters["wordsize"]
