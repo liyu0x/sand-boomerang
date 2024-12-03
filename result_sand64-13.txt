@@ -1,0 +1,48 @@
+Rounds: 13, probability: -43.23085524616716, Input Left:0x04204040, Input Right:0x2A416C60, Output Left:0x00100908, Output Right:0x00021012
+		 switch in:0x44204040, switch out:0x411AC852, trail weight:0x0028, switch weight:-0
+
+		 switch in:0x04204000, switch out:0x11825002, trail weight:0x0028, switch weight:-0
+
+		 switch in:0x04204800, switch out:0x11825002, trail weight:0x0028, switch weight:-0
+
+		 switch in:0x04204800, switch out:0x11825802, trail weight:0x0028, switch weight:-0
+
+		 switch in:0x04204040, switch out:0x811AC852, trail weight:0x0028, switch weight:-0
+
+		 switch in:0x04244000, switch out:0x11825002, trail weight:0x0029, switch weight:-0
+
+		 switch in:0x04204400, switch out:0x11825002, trail weight:0x0029, switch weight:-0
+
+		 switch in:0x04204020, switch out:0x11825002, trail weight:0x0029, switch weight:-0
+
+		 switch in:0x24204020, switch out:0x11825002, trail weight:0x0029, switch weight:-0
+
+		 switch in:0x04204000, switch out:0x11825082, trail weight:0x0029, switch weight:-0
+
+		 switch in:0x04204000, switch out:0x11825102, trail weight:0x0029, switch weight:-0
+
+		 switch in:0x04204000, switch out:0x1982500A, trail weight:0x0029, switch weight:-0
+
+		 switch in:0x04204000, switch out:0x11835002, trail weight:0x0029, switch weight:-0
+
+		 switch in:0x04204040, switch out:0x51825002, trail weight:0x0029, switch weight:-1
+
+		 switch in:0x44204000, switch out:0x011AC852, trail weight:0x0029, switch weight:-1
+
+		 switch in:0x04204000, switch out:0x11825202, trail weight:0x002A, switch weight:-0
+
+		 switch in:0x04204040, switch out:0x091AC853, trail weight:0x002A, switch weight:-0
+
+		 switch in:0x24204044, switch out:0x011AC852, trail weight:0x002A, switch weight:-0
+
+		 switch in:0x04204000, switch out:0x13925002, trail weight:0x002B, switch weight:-0
+
+		 switch in:0x0C600040, switch out:0x11825002, trail weight:0x002B, switch weight:-1
+
+		 switch in:0x0C680040, switch out:0x11825002, trail weight:0x002B, switch weight:-1
+
+		 switch in:0x04204000, switch out:0x13905002, trail weight:0x002C, switch weight:-0
+
+		 switch in:0x0C600040, switch out:0x1982500A, trail weight:0x002D, switch weight:-2
+
+		 switch in:0x0C680040, switch out:0x091AD012, trail weight:0x002E, switch weight:-1
